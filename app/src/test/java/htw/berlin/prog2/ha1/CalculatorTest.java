@@ -90,5 +90,20 @@ class CalculatorTest {
 
 
     //TODO hier weitere Tests erstellen
+
+    @Test
+    @DisplayName("should toggle the sign of the displayed number when the '+/-' button is pressed")
+    void testPressNegativeKey() {
+        Calculator calc = new Calculator();
+        calc.pressDigitKey(1);
+        calc.pressNegativeKey();
+
+
+        String expected = "-1";
+        String actual = calc.readScreen();
+
+        assertEquals(expected, actual);
+    }
+
 }
 
