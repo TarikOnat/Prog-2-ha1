@@ -14,6 +14,12 @@ public class Calculator {
 
     private String latestOperation = "";
 
+    // Bugfix 1: Hinzufügen eines Flags, um zu verfolgen, ob die Clear-Taste bereits einmal gedrückt wurde
+    private boolean clearKeyPressed = false;
+
+    // Bugfix 2: Hinzufügen eines Flags, um zu verfolgen, ob ein binärer Operator gerade gedrückt wurde
+    private boolean binaryOperationPressed = false;
+
     /**
      * @return den aktuellen Bildschirminhalt als String
      */
@@ -31,9 +37,13 @@ public class Calculator {
     public void pressDigitKey(int digit) {
         if(digit > 9 || digit < 0) throw new IllegalArgumentException();
 
-        if(screen.equals("0") || latestValue == Double.parseDouble(screen)) screen = "";
+        if(screen.equals("0") || binaryOperationPressed) {
+            screen = "";
+            binaryOperationPressed = false;
+        }
 
         screen = screen + digit;
+        clearKeyPressed = false;
     }
 
     /**
@@ -45,9 +55,18 @@ public class Calculator {
      * im Ursprungszustand ist.
      */
     public void pressClearKey() {
-        screen = "0";
-        latestOperation = "";
-        latestValue = 0.0;
+        if (clearKeyPressed) {
+            // Beim zweiten Drücken alles zurücksetzen
+            screen = "0";
+            latestOperation = "";
+            latestValue = 0.0;
+            clearKeyPressed = false;
+            binaryOperationPressed = false;
+        } else {
+            // Beim ersten Drücken nur den Bildschirm zurücksetzen
+            screen = "0";
+            clearKeyPressed = true;
+        }
     }
 
     /**
@@ -62,6 +81,8 @@ public class Calculator {
     public void pressBinaryOperationKey(String operation)  {
         latestValue = Double.parseDouble(screen);
         latestOperation = operation;
+        binaryOperationPressed = true;
+        clearKeyPressed = false;
     }
 
     /**
@@ -83,7 +104,7 @@ public class Calculator {
         screen = Double.toString(result);
         if(screen.equals("NaN")) screen = "Error";
         if(screen.contains(".") && screen.length() > 11) screen = screen.substring(0, 10);
-
+        clearKeyPressed = false;
     }
 
     /**
@@ -94,7 +115,12 @@ public class Calculator {
      * Beim zweimaligem Drücken, oder wenn bereits ein Trennzeichen angezeigt wird, passiert nichts.
      */
     public void pressDotKey() {
+        if (binaryOperationPressed) {
+            screen = "0";
+            binaryOperationPressed = false;
+        }
         if(!screen.contains(".")) screen = screen + ".";
+        clearKeyPressed = false;
     }
 
     /**
@@ -106,6 +132,7 @@ public class Calculator {
      */
     public void pressNegativeKey() {
         screen = screen.startsWith("-") ? screen.substring(1) : "-" + screen;
+        clearKeyPressed = false;
     }
 
     /**
@@ -118,6 +145,11 @@ public class Calculator {
      * und das Ergebnis direkt angezeigt.
      */
     public void pressEqualsKey() {
+        // Wenn keine Operation festgelegt wurde, nichts tun (keine Exception werfen)
+        if (latestOperation.isEmpty()) {
+            return;
+        }
+
         var result = switch(latestOperation) {
             case "+" -> latestValue + Double.parseDouble(screen);
             case "-" -> latestValue - Double.parseDouble(screen);
@@ -129,5 +161,7 @@ public class Calculator {
         if(screen.equals("Infinity")) screen = "Error";
         if(screen.endsWith(".0")) screen = screen.substring(0,screen.length()-2);
         if(screen.contains(".") && screen.length() > 11) screen = screen.substring(0, 10);
+        binaryOperationPressed = false;
+        clearKeyPressed = false;
     }
 }
